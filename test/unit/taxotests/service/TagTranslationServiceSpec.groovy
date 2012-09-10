@@ -57,7 +57,6 @@ class TagTranslationServiceSpec extends Specification {
 
     def 'translates a tag to available locales and adds the translation to the object'() {
         setup:
-        def expected = [T1_UK, T1_ES, T1_FR] as Set
         taggingService.tag(b1, UK, T1_UK)
 
         when:
@@ -65,6 +64,7 @@ class TagTranslationServiceSpec extends Specification {
         def ref = TagReference.findByLocaleAndTag(UK.toString(), T1_UK)
 
         then:
+        def expected = [T1_UK, T1_ES, T1_FR] as Set
         allTags(ref) == expected
         allTags(b1) == expected
     }
@@ -78,11 +78,13 @@ class TagTranslationServiceSpec extends Specification {
         tagTranslationService.translateAllTags(b1)
 
         then:
-        setsAreEqual([
-            T1_UK, T1_ES, T1_FR,
-            T2_UK, T2_ES, T2_FR
-        ],
-            allTags(b1))
+        setsAreEqual(
+            [
+                T1_UK, T1_ES, T1_FR,
+                T2_UK, T2_ES, T2_FR
+            ],
+            allTags(b1)
+        )
     }
 
     def 'translation attempt from unknown locale fails'() {
@@ -118,6 +120,7 @@ class TagTranslationServiceSpec extends Specification {
         UK     | T1_UK | SPAIN             | T1_ES         | T2_UK
         UK     | T2_UK | SPAIN             | T2_ES         | T1_UK
     }
+
     def 'finds several objects by a translated tag'() {
         setup:
         def b2 = new Book(name: 'b2').save()
