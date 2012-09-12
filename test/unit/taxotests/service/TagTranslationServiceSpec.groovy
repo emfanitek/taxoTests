@@ -3,7 +3,6 @@ package taxotests.service
 import com.grailsrocks.taxonomy.Taxon
 import com.grailsrocks.taxonomy.TaxonLink
 import com.grailsrocks.taxonomy.Taxonomy
-import com.grailsrocks.taxonomy.TaxonomyService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -12,6 +11,7 @@ import taxotests.Book
 import taxotests.TagReference
 
 import static java.util.Locale.*
+import com.grailsrocks.taxonomy.TaxonomyService
 
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
@@ -30,20 +30,14 @@ class TagTranslationServiceSpec extends Specification {
     final static String T2_ES = 'Mundo'
     final static Locale SPAIN = new Locale('es', 'ES')
 
-    def taxonomyService = new TaxonomyService()
-    def taggingService = new TaggingService()
-    def taxonomies = new TaxonomyHelper(taxonomyService)
-
-    def tagTranslationService = new TagTranslationService(
-        availableLocales: [FRANCE, SPAIN, UK],
-        translationService: new TranslationService(),
-        taxonomyService: taxonomyService
-    )
+    def tagTranslationService
+    def taggingService
 
     void setup() {
-        taxonomies.instrumentTaxonomyMethods([Book, TagReference])
-
-        taxonomyService.init()
+        new Initializer().initialize(
+            ['tagTranslationService','taggingService'],
+            this
+        )
         b1 = new Book(name: 'b1').save()
     }
 
@@ -87,7 +81,7 @@ class TagTranslationServiceSpec extends Specification {
         )
     }
 
-    def 'translation attempt from unknown locale fails'() {
+    def 'translation attempt of unknown tag fails'() {
         setup:
         taggingService.tag(b1, GERMANY, T1_GERMAN)
 
@@ -95,7 +89,7 @@ class TagTranslationServiceSpec extends Specification {
         tagTranslationService.translateTag(b1, GERMANY, T1_GERMAN)
 
         then:
-        thrown(AssertionError)
+        setsAreEqual(allTags(b1), [T1_GERMAN])
     }
 
     def 'finds an object by its given tag'() {
@@ -145,5 +139,33 @@ class TagTranslationServiceSpec extends Specification {
         UK     | T1_UK | FRANCE            | T1_FR         | T2_UK
         UK     | T1_UK | SPAIN             | T1_ES         | T2_UK
         UK     | T2_UK | SPAIN             | T2_ES         | T1_UK
+    }
+
+    def 'translating reuses previously created tag references taxonomies'() {
+        setup: 'if a book b1 has already been tagged and translated'
+        def b2 = new Book(name: 'b2').save()
+        taggingService.tag(b1, UK, T1_UK)
+        taggingService.tag(b1, UK, T2_UK)
+        tagTranslationService.translateAllTags(b1)
+
+        when: 'and a second book b2 is tagged with a tag that has been translated for b1'
+        taggingService.tag(b2, FRANCE, T1_FR)
+
+        then: 'all relevant translated tags from b1 are applied to b2 without asking to translate'
+        setsAreEqual(allTags(b2), [T1_ES, T1_FR, T1_UK])
+        //only one tag reference exists that contains translated tags of the translation tree of T1
+        //even if the translation process has been called twice
+        TagReference.findAllByTaxonomyExact(['by_locale', SPAIN, T1_ES]).size() == 1
+    }
+
+    def 'translating with the wrong reference locale results in failure'() {
+        setup:
+        taggingService.tag(b1, UK, T1_UK)
+
+        when:
+        tagTranslationService.translateTag(b1, FRANCE, T1_FR)
+
+        then:
+        thrown(NullPointerException)
     }
 }

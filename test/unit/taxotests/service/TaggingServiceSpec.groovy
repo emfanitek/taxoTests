@@ -20,10 +20,7 @@ import static grails.test.MockUtils.*
 @TestMixin(GrailsUnitTestMixin)
 @Mock([Book, TagReference, Taxon, Taxonomy, TaxonLink])
 class TaggingServiceSpec extends Specification {
-    def taggingService = new TaggingService()
-    def taxonomyService = new TaxonomyService()
-
-    def taxonomies = new TaxonomyHelper(taxonomyService)
+    def taggingService
 
     def b1
     static final T1 = 'T1'
@@ -36,10 +33,10 @@ class TaggingServiceSpec extends Specification {
 
 
     def setup() {
-        taxonomies.instrumentTaxonomyMethods([Book,TagReference])
-
-        taxonomyService.init()
-        mockLogging(TaxonomyService)
+        new Initializer().initialize(
+            ['taggingService'],
+            this
+        )
 
         b1 = new Book(name: 'b1').save()
     }
