@@ -4,14 +4,16 @@ import static java.util.Locale.FRANCE
 import static java.util.Locale.UK
 import taxotests.testobjects.TestDomainClass2
 import taxotests.testobjects.TestDomainClass1
+import com.grailsrocks.taxonomy.TaxonLink
 
 class SearchServiceSpec extends SpecificationSupport {
     SearchService searchService
     def taggingService
+    def taxonomyService
 
     def setup() {
         new Initializer().initialize(
-            ['searchService', 'taggingService'],
+            ['searchService', 'taggingService', 'taxonomyService'],
             this
         )
     }
@@ -21,7 +23,7 @@ class SearchServiceSpec extends SpecificationSupport {
         taggingService.tag(o1, locale, tag1)
 
         when:
-        Collection foundObjectsOfClass1ForTag1 = searchService.findAllByExactTag(o1.getClass(), locale, tag1)
+        Collection foundObjectsOfClass1ForTag1 = searchService.findAllByTag(o1.getClass(), locale, tag1)
 
         then:
         setsAreEqual([o1], foundObjectsOfClass1ForTag1)
@@ -36,11 +38,11 @@ class SearchServiceSpec extends SpecificationSupport {
     //see http://jira.grails.org/browse/GPTAXONOMY-6
     def 'you will not find an untagged object'() {
         expect:
-        searchService.findAllByExactTag(o1.getClass(), UK, 'randomTag').empty
+        searchService.findAllByTag(o1.getClass(), UK, 'randomTag').empty
 
 /*
         expect:
-        searchService.findAllByExactTag(o1.getClass(), UK, 'randomTag').empty
+        searchService.findAllByTag(o1.getClass(), UK, 'randomTag').empty
         then:
         thrown(NullPointerException)
 */
@@ -60,10 +62,10 @@ class SearchServiceSpec extends SpecificationSupport {
         def class2 = o3.getClass()
 
         when:
-        Collection foundObjectsOfClass1ForTag1 = searchService.findAllByExactTag(class1, locale, tag1)
-        Collection foundObjectsOfClass1ForTag2 = searchService.findAllByExactTag(class1, locale, tag2)
-        Collection foundObjectsOfClass2ForTag1 = searchService.findAllByExactTag(class2, locale, tag1)
-        Collection foundObjectsOfClass2ForTag2 = searchService.findAllByExactTag(class2, locale, tag2)
+        Collection foundObjectsOfClass1ForTag1 = searchService.findAllByTag(class1, locale, tag1)
+        Collection foundObjectsOfClass1ForTag2 = searchService.findAllByTag(class1, locale, tag2)
+        Collection foundObjectsOfClass2ForTag1 = searchService.findAllByTag(class2, locale, tag1)
+        Collection foundObjectsOfClass2ForTag2 = searchService.findAllByTag(class2, locale, tag2)
 
         then:
         setsAreEqual([o1], foundObjectsOfClass1ForTag1)
@@ -82,7 +84,7 @@ class SearchServiceSpec extends SpecificationSupport {
         taggingService.tagAndTranslate(o1, srcLocale, [t1])
 
         when:
-        Collection foundObjects = searchService.findAllByExactTag(o1.getClass(), dstLocale, t1_trans)
+        Collection foundObjects = searchService.findAllByTag(o1.getClass(), dstLocale, t1_trans)
 
         then:
         setsAreEqual(foundObjects, [o1])
@@ -101,7 +103,7 @@ class SearchServiceSpec extends SpecificationSupport {
         taggingService.tagAndTranslate(o3, locale, [irrelevantTag])
 
         when:
-        Collection allObjs = searchService.findAllByExactTag(o1.getClass(), translationLocale, translatedTag)
+        Collection allObjs = searchService.findAllByTag(o1.getClass(), translationLocale, translatedTag)
         assert allObjs.size() == 2
 
         then:
@@ -114,5 +116,23 @@ class SearchServiceSpec extends SpecificationSupport {
         UK     | 'World' | SPAIN             | 'Mundo'       | 'Hello'
     }
 
+    def 'you will find objects matching any of the tags you specify in the search'() {
+        setup:
+        def o3 = new TestDomainClass1(name: 'c1_o3').save()
+        taggingService.tag(o1, locale, t1)
+        taggingService.tag(o1, locale, t2)
+        taggingService.tag(o2, locale, t2)
+        taggingService.tag(o3, locale, t3)
 
+        when:
+        def found = searchService.findAllByTags(o1.getClass(), locale, [t1, t2])
+
+        then:
+        setsAreEqual(found, [o2, o1])
+        assert found.size() == 2
+
+        where:
+        locale | t1 | t2 | t3
+        UK     | T1 | T2 | T3
+    }
 }

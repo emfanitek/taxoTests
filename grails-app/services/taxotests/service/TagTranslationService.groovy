@@ -2,11 +2,12 @@ package taxotests.service
 
 import taxotests.TagReference
 import com.grailsrocks.taxonomy.Taxon
+import com.grailsrocks.taxonomy.TaxonomyService
 
-class TagTranslationService {
+class TagTranslationService extends TaxonomyService {
     def availableLocales
     def translationService
-    def taxonomyService
+
     static transactional = true
 
     void translateTag(obj, Locale referenceLocale, String referenceTag) {
@@ -41,7 +42,7 @@ class TagTranslationService {
     }
 
     private TagReference findTagReference(Taxon taxon) {
-        List relatedTagReferences = taxonomyService.findObjectsByTaxon(TagReference, ['by_locale', taxon.parent.name, taxon.name])
+        List relatedTagReferences = findObjectsByTaxon(TagReference, ['by_locale', taxon.parent.name, taxon.name])
         if (relatedTagReferences.empty) {
             null
         } else {
@@ -51,7 +52,7 @@ class TagTranslationService {
     }
 
     TagReference findTagReference(Locale referenceLocale, String tag) {
-        def taxon = taxonomyService.resolveTaxon(['by_locale', referenceLocale.toString(), tag])
+        def taxon = resolveTaxon(['by_locale', referenceLocale.toString(), tag])
         if (taxon == null) {
             null
         } else {
@@ -67,5 +68,14 @@ class TagTranslationService {
         availableLocales.findAll {Locale l ->
             !(l.toString() in translatedLocales)
         }
+    }
+
+    public <T> Collection<T> findAllObjectsByTagList(Class<T> objectClass,Locale locale,List<String> tags) {
+        def taxonList=tags.collect {t->
+            String localeAsString = locale.toString()
+            resolveTaxon(['by_locale', localeAsString,t]).id
+        }
+
+        getObjectsForTaxonIds(objectClass,taxonList,[:])
     }
 }

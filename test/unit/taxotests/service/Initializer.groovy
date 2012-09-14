@@ -24,25 +24,23 @@ class Initializer {
     def searchService
 
     void initialize(List props, cut) {
-        taxonomyService = new TaxonomyService()
-        taxonomyHelper = new TaxonomyHelper(taxonomyService)
-
         translationService = new TranslationService()
         tagTranslationService = new TagTranslationService(
             availableLocales: [FRANCE, SPAIN, UK],
             translationService: translationService,
-            taxonomyService: taxonomyService
         )
+        taxonomyService = tagTranslationService
         taggingService = new TaggingService(
             tagTranslationService: tagTranslationService
         )
 
+        taxonomyHelper = new TaxonomyHelper(taxonomyService)
         taxonomyHelper.instrumentTaxonomyMethods([TestDomainClass1, TestDomainClass2, TagReference])
 
         taxonomyService.init()
         translationService.init()
 
-        searchService = new SearchService(taxonomyService:taxonomyService)
+        searchService = new SearchService(tagTranslationService: tagTranslationService)
 
         mockLogging(TaxonomyService)
 
