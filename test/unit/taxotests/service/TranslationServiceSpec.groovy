@@ -1,27 +1,19 @@
 package taxotests.service
 
-import static org.junit.Assert.*
-
-import grails.test.mixin.*
-import grails.test.mixin.support.*
-import org.junit.*
 import spock.lang.Unroll
-import spock.lang.Specification
 
-import static java.util.Locale.UK
 import static java.util.Locale.FRANCE
+import static java.util.Locale.UK
 
-/**
- * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
- */
-@TestMixin(GrailsUnitTestMixin)
-class TranslationServiceSpec extends Specification {
-    private static Locale SPAIN = new Locale('es', 'ES')
+class TranslationServiceSpec extends SpecificationSupport {
 
-    def translationService = new TranslationService()
+    def translationService
 
     def setup() {
-        translationService.init()
+        new Initializer().initialize(
+            ['translationService'],
+            this
+        )
     }
 
     @Unroll("The translation of '#phrase' from #l1 to #l2 is '#translation'")
@@ -40,6 +32,6 @@ class TranslationServiceSpec extends Specification {
 
     def 'unknown translation returns null'() {
         expect:
-        null == translationService.translate('Hooooo', UK, FRANCE)
+        translationService.translate('Hooooo', UK, FRANCE) == null
     }
 }

@@ -1,14 +1,13 @@
 package taxotests.service
 
 import com.grailsrocks.taxonomy.TaxonomyService
-import taxotests.Book
+import taxotests.testobjects.TestDomainClass1
 import taxotests.TagReference
-import static java.util.Locale.*
-import grails.test.mixin.Mock
-import com.grailsrocks.taxonomy.Taxon
-import com.grailsrocks.taxonomy.Taxonomy
-import com.grailsrocks.taxonomy.TaxonLink
-import static grails.test.MockUtils.*
+
+import static grails.test.MockUtils.mockLogging
+import static java.util.Locale.FRANCE
+import static java.util.Locale.UK
+import taxotests.testobjects.TestDomainClass2
 
 /**
  * lmuniz (9/13/12 12:39 AM)
@@ -22,6 +21,7 @@ class Initializer {
     def tagTranslationService
     def taggingService
     def translationService
+    def searchService
 
     void initialize(List props, cut) {
         taxonomyService = new TaxonomyService()
@@ -37,15 +37,17 @@ class Initializer {
             tagTranslationService: tagTranslationService
         )
 
-        taxonomyHelper.instrumentTaxonomyMethods([Book, TagReference])
+        taxonomyHelper.instrumentTaxonomyMethods([TestDomainClass1, TestDomainClass2, TagReference])
 
         taxonomyService.init()
         translationService.init()
 
+        searchService = new SearchService(taxonomyService:taxonomyService)
+
         mockLogging(TaxonomyService)
 
-        props.each{String prop->
-            cut[prop]=this."${prop}"
+        props.each {String prop ->
+            cut[prop] = this."${prop}"
         }
     }
 }
