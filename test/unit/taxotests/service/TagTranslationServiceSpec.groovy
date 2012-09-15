@@ -1,17 +1,8 @@
 package taxotests.service
 
-import com.grailsrocks.taxonomy.Taxon
-import com.grailsrocks.taxonomy.TaxonLink
-import com.grailsrocks.taxonomy.Taxonomy
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
-
-import taxotests.testobjects.TestDomainClass1
-import taxotests.TagReference
-
 import static java.util.Locale.*
-import taxotests.testobjects.TestDomainClass2
+
+import taxotests.SemanticLink
 
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
@@ -42,7 +33,7 @@ class TagTranslationServiceSpec extends SpecificationSupport {
 
         when:
         tagTranslationService.translateTag(o1, UK, T1_UK)
-        def ref = TagReference.findByLocaleAndTag(UK.toString(), T1_UK)
+        def ref = SemanticLink.findByLocaleAndTag(UK.toString(), T1_UK)
 
         then:
         def expected = [T1_UK, T1_ES, T1_FR] as Set
@@ -92,7 +83,7 @@ class TagTranslationServiceSpec extends SpecificationSupport {
         setsAreEqual(allTags(o2), [T1_ES, T1_FR, T1_UK])
         //only one tag reference exists that contains translated tags of the translation tree of T1
         //even if the translation process has been called twice
-        TagReference.findAllByTaxonomyExact(['by_locale', SPAIN, T1_ES]).size() == 1
+        SemanticLink.findAllByTaxonomyExact([BY_LOCALE, SPAIN, T1_ES]).size() == 1
     }
 
     def 'translating with the wrong reference locale results in failure'() {

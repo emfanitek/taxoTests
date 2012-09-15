@@ -1,19 +1,18 @@
 package taxotests.service
 
+import taxotests.testobjects.TestDomainClass1
+import taxotests.testobjects.TestDomainClass2
+
 import static java.util.Locale.FRANCE
 import static java.util.Locale.UK
-import taxotests.testobjects.TestDomainClass2
-import taxotests.testobjects.TestDomainClass1
-import com.grailsrocks.taxonomy.TaxonLink
 
 class SearchServiceSpec extends SpecificationSupport {
     SearchService searchService
     def taggingService
-    def taxonomyService
 
     def setup() {
         new Initializer().initialize(
-            ['searchService', 'taggingService', 'taxonomyService'],
+            ['searchService', 'taggingService'],
             this
         )
     }
@@ -116,7 +115,7 @@ class SearchServiceSpec extends SpecificationSupport {
         UK     | 'World' | SPAIN             | 'Mundo'       | 'Hello'
     }
 
-    def 'you will find objects matching any of the tags you specify in the search'() {
+    def 'you will find objects matching any of the tags you specify in the search, including non-existent tags'() {
         setup:
         def o3 = new TestDomainClass1(name: 'c1_o3').save()
         taggingService.tag(o1, locale, t1)
@@ -125,11 +124,26 @@ class SearchServiceSpec extends SpecificationSupport {
         taggingService.tag(o3, locale, t3)
 
         when:
-        def found = searchService.findAllByTags(o1.getClass(), locale, [t1, t2])
+        def found = searchService.findAllByTagDisjunction(o1.getClass(), locale, [t1, t2, t4])
 
         then:
         setsAreEqual(found, [o2, o1])
         assert found.size() == 2
+
+        where:
+        locale | t1 | t2 | t3 | t4
+        UK     | T1 | T2 | T3 | T4
+    }
+
+    def 'searching for non-existent tags will return an empty Collection'() {
+        setup:
+        taggingService.tag(o1, locale, t1)
+
+        when:
+        def found = searchService.findAllByTagDisjunction(o1.getClass(), locale, [t2, t3])
+
+        then:
+        assert found.size() == 0
 
         where:
         locale | t1 | t2 | t3

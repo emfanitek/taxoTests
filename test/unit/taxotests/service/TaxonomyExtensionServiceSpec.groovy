@@ -1,4 +1,4 @@
-package taxotests
+package taxotests.service
 
 import static org.junit.Assert.*
 
@@ -10,7 +10,7 @@ import org.junit.*
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
  */
 @TestMixin(GrailsUnitTestMixin)
-class TagReferenceSpec {
+class TaxonomyExtensionServiceSpec {
 
     void setUp() {
         // Setup logic here

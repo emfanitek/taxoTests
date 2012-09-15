@@ -1,6 +1,6 @@
 package taxotests
 
-class TagReference {
+class SemanticLink {
     static taxonomy = true
     String tag
     String locale

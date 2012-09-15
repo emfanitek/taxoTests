@@ -2,12 +2,13 @@ package taxotests.service
 
 import com.grailsrocks.taxonomy.TaxonomyService
 import taxotests.testobjects.TestDomainClass1
-import taxotests.TagReference
+import taxotests.SemanticLink
 
 import static grails.test.MockUtils.mockLogging
 import static java.util.Locale.FRANCE
 import static java.util.Locale.UK
 import taxotests.testobjects.TestDomainClass2
+import taxotests.domain.DomainClassInstrumentator
 
 /**
  * lmuniz (9/13/12 12:39 AM)
@@ -20,29 +21,46 @@ class Initializer {
 
     def tagTranslationService
     def taggingService
-    def translationService
+    def mockTranslationService
     def searchService
+    def taxonomyExtensionService
+    def domainClassInstrumentator
 
     void initialize(List props, cut) {
-        translationService = new TranslationService()
+        mockLogging(TaxonomyService)
+
+        mockTranslationService = new MockTranslationService()
+        mockTranslationService.init()
+
+        taxonomyService = new TaxonomyService()
+        taxonomyService.init()
+
+        taxonomyExtensionService = new TaxonomyExtensionService(taxonomyService: taxonomyService)
+
         tagTranslationService = new TagTranslationService(
             availableLocales: [FRANCE, SPAIN, UK],
-            translationService: translationService,
+            translationService: mockTranslationService,
+            taxonomyService: taxonomyService ,
+            taxonomyExtensionService:taxonomyExtensionService
         )
-        taxonomyService = tagTranslationService
+
         taggingService = new TaggingService(
             tagTranslationService: tagTranslationService
         )
 
         taxonomyHelper = new TaxonomyHelper(taxonomyService)
-        taxonomyHelper.instrumentTaxonomyMethods([TestDomainClass1, TestDomainClass2, TagReference])
+        taxonomyHelper.instrumentTaxonomyMethods([TestDomainClass1, TestDomainClass2, SemanticLink])
 
-        taxonomyService.init()
-        translationService.init()
 
-        searchService = new SearchService(tagTranslationService: tagTranslationService)
+        searchService = new SearchService(
+            tagTranslationService: tagTranslationService,
+            taxonomyService:taxonomyService
+        )
 
-        mockLogging(TaxonomyService)
+        domainClassInstrumentator=new DomainClassInstrumentator(
+            taggingService: taggingService,
+            searchService: searchService
+        )
 
         props.each {String prop ->
             cut[prop] = this."${prop}"

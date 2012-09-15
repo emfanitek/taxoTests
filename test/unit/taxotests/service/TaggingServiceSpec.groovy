@@ -1,9 +1,8 @@
 package taxotests.service
 
-import taxotests.TagReference
-
 import static java.util.Locale.FRANCE
 import static java.util.Locale.UK
+import taxotests.SemanticLink
 
 class TaggingServiceSpec extends SpecificationSupport {
     def taggingService
@@ -21,7 +20,7 @@ class TaggingServiceSpec extends SpecificationSupport {
         taggingService.tag(o1, FRANCE, T1)
 
         then:
-        TagReference.findByLocaleAndTag(FRANCE.toString(), T1)?.tag == T1
+        SemanticLink.findByLocaleAndTag(FRANCE.toString(), T1)?.tag == T1
     }
 
     def 'You can tag and translate an object at the same time, with multiple tags'() {
@@ -46,13 +45,13 @@ class TaggingServiceSpec extends SpecificationSupport {
         taggingService.tag(o1, FRANCE, T1)
 
         then:
-        TagReference.findAllByLocaleAndTag(FRANCE.toString(), T1).size() == 1
+        SemanticLink.findAllByLocaleAndTag(FRANCE.toString(), T1).size() == 1
     }
 
     def 'object is tagged and reference is tagged'() {
         when:
         taggingService.tag(o1, FRANCE, T1)
-        def ref = TagReference.findByLocaleAndTag(FRANCE.toString(), T1)
+        def ref = SemanticLink.findByLocaleAndTag(FRANCE.toString(), T1)
 
         then:
         hasExactlyOneTag(o1, FRANCE.toString(), T1)
@@ -63,15 +62,15 @@ class TaggingServiceSpec extends SpecificationSupport {
         when:
         taggingService.tag(o1, FRANCE, T1)
         taggingService.tag(o1, FRANCE, T2)
-        def ref1 = TagReference.findByLocaleAndTag(FRANCE.toString(), T1)
-        def ref2 = TagReference.findByLocaleAndTag(FRANCE.toString(), T2)
+        def ref1 = SemanticLink.findByLocaleAndTag(FRANCE.toString(), T1)
+        def ref2 = SemanticLink.findByLocaleAndTag(FRANCE.toString(), T2)
 
         then:
         ref1 != null
         ref2 != null
 
         [T1, T2].every {tag ->
-            o1.hasTaxonomy(['by_locale', 'fr_FR', tag])
+            o1.hasTaxonomy([BY_LOCALE, 'fr_FR', tag])
         }
 
         hasExactlyOneTag(ref1, 'fr_FR', T1)

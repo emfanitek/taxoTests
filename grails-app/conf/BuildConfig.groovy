@@ -55,6 +55,7 @@ grails.project.dependency.resolution = {
 
         compile ":taxonomy:latest.integration"
         compile ":console:latest.integration"
+        compile ":rest-client-builder:latest.integration"
 
         test ":spock:0.6"
     }

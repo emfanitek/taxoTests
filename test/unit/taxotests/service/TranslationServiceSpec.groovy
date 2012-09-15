@@ -7,13 +7,15 @@ import static java.util.Locale.UK
 
 class TranslationServiceSpec extends SpecificationSupport {
 
-    def translationService
+    TranslationService translationService
+    TranslationService mockTranslationService
 
     def setup() {
         new Initializer().initialize(
-            ['translationService'],
+            ['mockTranslationService'],
             this
         )
+        translationService = mockTranslationService
     }
 
     @Unroll("The translation of '#phrase' from #l1 to #l2 is '#translation'")

@@ -1,27 +1,29 @@
 package taxotests.service
 
-import taxotests.TagReference
 import com.grailsrocks.taxonomy.Taxon
+
+import static taxotests.taxonomy.TaxonHelper.taxonPath
 
 class TaggingService {
     def tagTranslationService
 
     void tag(obj, Locale locale, String tag) {
-        def referenceTag = tagTranslationService.findTagReference(locale, tag)
+        def semanticLink = tagTranslationService.findSemanticLink(locale, tag)
 
-        if (referenceTag == null) {
-            def taxo = ['by_locale', locale.toString(), tag]
-            referenceTag = new TagReference(locale: locale.toString(), tag: tag).save()
-            referenceTag.addToTaxonomy(taxo)
-            obj.addToTaxonomy(taxo)
+        if (semanticLink == null) {
+            tagObjectAndCreateSemanticLink(locale, tag, obj)
         } else {
-            referenceTag.taxonomies.each {taxo ->
-                obj.addToTaxonomy(taxo)
-            }
+            tagTranslationService.reuseAllTagsOfSemanticLink(semanticLink, obj)
         }
     }
 
-    void tagAndTranslate(obj, Locale locale, List<String> tags) {
+    private void tagObjectAndCreateSemanticLink(Locale locale, String tag, obj) {
+        def taxonPath = taxonPath(locale, tag)
+        obj.addToTaxonomy(taxonPath)
+        tagTranslationService.createSemanticLink(locale, tag)
+    }
+
+    void tagAndTranslate(obj, Locale locale, Collection<String> tags) {
         tags.each {tag(obj, locale, it)}
         tagTranslationService.translateAllTags(obj)
     }

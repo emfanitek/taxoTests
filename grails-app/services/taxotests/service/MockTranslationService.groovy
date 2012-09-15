@@ -3,8 +3,7 @@ package taxotests.service
 import static java.util.Locale.UK as L_UK
 import static java.util.Locale.FRANCE as L_FR
 
-//TODO this is a stub implement with google translation API
-class TranslationService {
+class MockTranslationService implements TranslationService {
     private static Locale L_SPAIN = new Locale('es', 'ES')
     private static String SPAIN = L_SPAIN.toString()
     private static String UK = L_UK.toString()
